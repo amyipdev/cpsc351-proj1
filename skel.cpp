@@ -53,11 +53,11 @@ void computeHash(const string& hashProgName)
   /** TODO: Now, lets read a message from the parent **/
 
   /* Glue together a command line <PROGRAM NAME>. 
- 	 * For example, sha512sum fileName.
- 	 */
+   * For example, sha512sum fileName.
+   */
   string cmdLine(hashProgName);
   cmdLine += " ";
-  cmdLine += fileNameRecv;	
+  cmdLine += fileNameRecv;
   /* TODO: Open the pipe to the program (specified in cmdLine) 
   * using popen() and save the ouput into hashValue. See popen.cpp
   * for examples using popen.
@@ -66,10 +66,10 @@ void computeHash(const string& hashProgName)
   .
   */
   /* TODO: Send a string to the parent 
- 	 .
-	 .
-	 .
-	*/
+     .
+     .
+     .
+  */
   /* The child terminates */
   exit(0);
 }
@@ -83,15 +83,15 @@ void parentFunc(const string& hashProgName) {
   /* Reset the hash buffer */
   memset(hashValue, (char)NULL, HASH_VALUE_LENGTH);
   /* TODO: Send the string to the child
-	 .
-	 .
-	 .
-	 */
+     .
+     .
+     .
+  */
   /* TODO: Read the string sent by the child
-	  .
-	  .
-	  .
-	  */
+     .
+     .
+     .
+  */
   /* Print the hash value */
   fprintf(stdout, "%s HASH VALUE: %s\n", hashProgName.c_str(), hashValue);
   fflush(stdout);
@@ -102,15 +102,21 @@ int main(int argc, char** argv) {
   if (argc < 2) {
     fprintf(stderr, "USAGE: %s <FILE NAME>\n", argv[0]); 
     exit(-1);
-  }	
+  }
   /* Save the name of the file */
   fileName = argv[1];
   /* The process id */
   pid_t pid;
-  /* Run a program for each type of hashing algorithm hash algorithm */	
+  /* Run a program for each type of hashing algorithm hash algorithm */
   for (int hashAlgNum = 0; hashAlgNum < HASH_PROG_ARRAY_SIZE; ++hashAlgNum) {
-    /** TODO: create two pipes **/
-    
+    if (pipe(parentToChildPipe) < 0) {
+      perror("pipe1");
+      exit(-1);
+    }
+    if (pipe(childToParentPipe) < 0) {
+      perror("pipe2");
+      exit(-1);
+    }
     /* Fork a child process and save the id */
     if ((pid = fork()) < 0) {
       perror("fork");
@@ -118,7 +124,14 @@ int main(int argc, char** argv) {
     } else if (pid == 0) {
       /* I am a child */
       /** TODO: close the unused ends of two pipes **/
-
+      if (close(parentToChildPipe[READ_END])) {
+        perror("close1");
+        exit(-1);
+      }
+      if (close(childToParentPipe[WRITE_END])) {
+        perror("close2");
+        exit(-1);
+      }
       /* Compute the hash */
       computeHash(hashProgs[hashAlgNum]);
     } else {
