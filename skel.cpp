@@ -78,20 +78,34 @@ void parentFunc(const string& hashProgName) {
   /* I am the parent */
   /** TODO: close the unused ends of two pipes. **/
 
+  if (close(childToParentPipe[WRITE_END]) < 0){
+    perror("close2");
+    exit(-1);
+  }
+
+  if (close(parentToChildPipe[READ_END]) < 0){
+    perror("close1");
+    exit(-1);
+  }
+
   /* The buffer to hold the string received from the child */
   char hashValue[HASH_VALUE_LENGTH];
   /* Reset the hash buffer */
   memset(hashValue, (char)NULL, HASH_VALUE_LENGTH);
-  /* TODO: Send the string to the child
-     .
-     .
-     .
-  */
-  /* TODO: Read the string sent by the child
-     .
-     .
-     .
-  */
+  /* TODO: Send the string to the child*/
+
+  if (write(parentToChildPipe[WRITE_END], fileName, sizeof(fileName)) < 0){
+    perror("write");
+    exit(-1);
+  }
+
+  /* TODO: Read the string sent by the child*/
+
+  if (read(childToParentPipe[READ_END], hashValue, HASH_VALUE_LENGTH) < 0){
+    perror("read");
+    exit(-1);
+  }
+
   /* Print the hash value */
   fprintf(stdout, "%s HASH VALUE: %s\n", hashProgName.c_str(), hashValue);
   fflush(stdout);
