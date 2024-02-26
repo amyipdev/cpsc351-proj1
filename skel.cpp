@@ -94,7 +94,7 @@ void parentFunc(const string& hashProgName) {
   memset(hashValue, (char)NULL, HASH_VALUE_LENGTH);
   /* TODO: Send the string to the child*/
 
-  if (write(parentToChildPipe[WRITE_END], fileName, sizeof(fileName)) < 0){
+  if(write(parentToChildPipe[WRITE_END], fileName.c_str(), fileName.length() + 1) < 0){
     perror("write");
     exit(-1);
   }
