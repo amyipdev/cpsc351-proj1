@@ -51,25 +51,36 @@ void computeHash(const string& hashProgName)
   /* Fill the buffer with 0's */
   memset(fileNameRecv, (char)NULL, MAX_FILE_NAME_LENGTH);
   /** TODO: Now, lets read a message from the parent **/
-
-  /* Glue together a command line <PROGRAM NAME>. 
+  ssize_t bytesRead = read(STDIN_FILENO, fileNameRecv, MAX_FILE_NAME_LENGTH);
+  if(bytesRead == -1) {
+    cerr << "Error reading message from the parent." << endl;
+    exit(1);
+  }
+  /* Glue together a command line <PROGRAM NAME>.
    * For example, sha512sum fileName.
    */
+   string command = hashProgName + " " + fileNameRecv;
   string cmdLine(hashProgName);
   cmdLine += " ";
   cmdLine += fileNameRecv;
-  /* TODO: Open the pipe to the program (specified in cmdLine) 
+  /* TODO: Open the pipe to the program (specified in cmdLine)
   * using popen() and save the ouput into hashValue. See popen.cpp
   * for examples using popen.
-  .
-  .
-  .
   */
-  /* TODO: Send a string to the parent 
-     .
-     .
-     .
+  FILE* pipe = popen(cmdLine.c_str(), "r");
+  if(!pipe){
+    cerr << "popen error" << endl;
+    exit(1);
+  }
+  fgets(hashValue, HASH_VALUE_LENGTH, pipe);
+  pclose(pipe);
+  /* TODO: Send a string to the parent
   */
+  ssize_t bytesWritten = write(STDOUT_FILENO, hashValue, HASH_VALUE_LENGTH);
+  if(bytesWritten == -1) {
+    cerr << "Error writing to the parent." << endl;
+    exit(1);
+  }
   /* The child terminates */
   exit(0);
 }
@@ -114,7 +125,7 @@ void parentFunc(const string& hashProgName) {
 int main(int argc, char** argv) {
   /* Check for errors */
   if (argc < 2) {
-    fprintf(stderr, "USAGE: %s <FILE NAME>\n", argv[0]); 
+    fprintf(stderr, "USAGE: %s <FILE NAME>\n", argv[0]);
     exit(-1);
   }
   /* Save the name of the file */
